@@ -1,6 +1,11 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
+import Login from '../views/Login.vue'
+import Register from '../views/Register.vue'
+import { o_O, USER_TOKEN } from '../Helpers/index'
+import { Authlogout } from '../Services/AuthService'
+import { clearStorage, getInStorage } from '../Helpers/localStorage'
 
 Vue.use(VueRouter)
 
@@ -8,7 +13,33 @@ Vue.use(VueRouter)
   {
     path: '/',
     name: 'Home',
-    component: Home
+    component: Home,
+    beforeEnter: async (to, from, next) => {
+      let token = await getInStorage(USER_TOKEN)
+      if(!token) next('/login')
+      // else if(isEmpty(user)) next('/404')
+      else next()
+    }
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login,
+    beforeEnter: async (to, from, next) => {
+      let token = await getInStorage(USER_TOKEN)
+      if (token) next('/')
+      else next()
+    }
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register,
+    beforeEnter: async (to, from, next) => {
+      let token = await getInStorage(USER_TOKEN)
+      if (token) next('/')
+      else next()
+    }
   },
   {
     path: '/about',
@@ -19,7 +50,22 @@ Vue.use(VueRouter)
     component: function () {
       return import(/* webpackChunkName: "about" */ '../views/About.vue')
     }
-  }
+  },
+  {
+    path: "/logout",
+    name: "Logout",
+    beforeEnter: async (to, from, next) => {
+        let [err, data] = await o_O(
+            Authlogout()
+        );
+
+        if(data && data.status === 200){
+            await clearStorage();
+            next('/login')
+            location.reload();
+        }
+    },
+  },
 ]
 
 const router = new VueRouter({
